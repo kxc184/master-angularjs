@@ -1,42 +1,45 @@
-var myApp = angular.module("myApp", ["ngRoute"]);
-
-myApp.config(function ($routeProvider) {
+var weatherApp = angular.module("weatherApp", ["ngRoute"]);
+const API_KEY = "8a0e793e3c26d69498b9ebff27bcd25e";
+weatherApp.config(function ($routeProvider) {
   $routeProvider
-
     .when("/", {
-      templateUrl: "pages/main.html",
-      controller: "mainController",
+      templateUrl: "pages/home.html",
+      controller: "homeController",
     })
-
-    .when("/second", {
-      templateUrl: "pages/second.html",
-      controller: "secondController",
-    })
-    .when("/third", {
-      templateUrl: "pages/third.html",
-      controller: "thirdController",
+    .when("/forecast", {
+      templateUrl: "pages/forecast.html",
+      controller: "forecastController",
     });
 });
 
-myApp.controller("mainController", [
+weatherApp.controller("homeController", [
   "$scope",
-  "$log",
-  function ($scope, $log) {
-    $scope.name = "Main";
+  "cityService",
+  function ($scope, cityService) {
+    $scope.name = cityService.city;
+    $scope.$watch("name", function () {
+      cityService.city = $scope.name;
+    });
   },
 ]);
 
-myApp.controller("secondController", [
+weatherApp.controller("forecastController", [
   "$scope",
-  "$log",
-  function ($scope, $log) {
-    $scope.name = "Second";
+  "cityService",
+  "$resource",
+  function ($scope, cityService, $resource) {
+    $scope.city = cityService.city;
+    console.log($scope.city);
+    $scope.weatherApi = $resource(
+      "http://api.openweathermap.org/data/2.5/forecast/daily",
+      { callback: "JSON_CALLBACK" },
+      { get: { method: "JSONP" } }
+    );
+
+    $scope.weatherResult = $scope.weatherApi.get({ q: $scope.city, cnt: 2 });
   },
 ]);
 
-myApp.controller("thirdController", [
-  "$scope",
-  function ($scope) {
-    $scope.name = "third";
-  },
-]);
+weatherApp.service("cityService", function () {
+  this.city = "Enter Your City";
+});
